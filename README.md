@@ -52,8 +52,6 @@ Control the application window behavior:
 ---
 
 ## 📸 Screenshots
-*(Replace these links with actual screenshots of your app)*
-
 <div align="center">
   <img src="assets/main.png" width="45%" alt="Main Interface" />
   <img src="assets/calc.png" width="45%" alt="Calculator" />
