@@ -1,9 +1,8 @@
-
 # 🧰 DeskUtility Pro
-
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
 ![CustomTkinter](https://img.shields.io/badge/GUI-CustomTkinter-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-MIT-purple.svg)
+![Version](https://img.shields.io/badge/Version-1.1.0-success.svg)
 
 **DeskUtility Pro** is a powerful, lightweight, and single-file desktop application designed to boost your productivity. Built with modern Python and CustomTkinter, it bundles essential daily tools into one beautifully designed, dark-themed interface.
 
@@ -14,47 +13,56 @@
 ### 📐 Unit Converter
 Convert values seamlessly across 5 major categories:
 - **Length, Weight, Speed, Volume, and Temperature.**
-- Features instant calculation and a handy "Swap Units" button.
-
+- Instant calculation with improved UI and **auto-convert** on unit swap.
 
 ### 🧮 Advanced Calculator
-Not just a basic calculator.
-- Supports complex expressions and parentheses.
-- Built-in **History Panel** to track all your previous calculations.
-- Keyboard support for rapid typing.
+More than just a basic calculator:
+- Supports complex expressions, parentheses and operator priority.
+- Built-in **History Panel** to review previous calculations.
+- Full keyboard support for fast input.
 
 ### ⏱ Time Center (Timer / Alarm / Stopwatch)
-Fully multi-threaded time tracking:
-- **Timer:** Precise countdown with a visual progress bar.
-- **Alarm:** Set a 24-hour clock alarm that triggers locally.
-- **Stopwatch:** Tracks elapsed time with millisecond precision and a Lap recording system.
+Reliable and responsive time tools:
+- **Timer:** Countdown with visual progress bar and smooth updates.
+- **Alarm:** Set a 24-hour alarm that triggers accurately.
+- **Stopwatch:** Millisecond precision with Lap recording.
 
 ### 📋 Clipboard Manager
-Never lose copied text again.
-- Automatically monitors your system clipboard in the background.
-- Stores up to 30 recent clipboard items.
-- One-click copy to restore previous items to your active clipboard.
+Never lose copied text again:
+- Automatically monitors your system clipboard.
+- Stores up to 30 recent items.
+- Click to select and one-click restore to clipboard.
 
 ### 🔧 Window Tools
-Control how the application behaves on your desktop:
-- **Always On Top:** Pin the app above all other windows.
-- **Window Opacity:** Adjust transparency from $50\%$ to $100\%$ for a seamless desktop experience.
+Control the application window behavior:
+- **Always On Top:** Keep the app above all other windows.
+- **Window Opacity:** Adjust transparency from 50% to 100%.
+
+---
+
+## ✨ What's New in v1.1.0
+
+- **Major Stability Improvement**: Replaced all background threads with safe `after()` loops (no more threading issues or crashes).
+- Fixed critical bug in CalculatorFrame (duplicate UI method).
+- Significantly improved UI consistency and visual polish across all tools.
+- Better responsiveness in Timer, Stopwatch and Clipboard Manager.
+- Enhanced Swap button in Unit Converter (now auto-converts).
+- General code cleanup and improved keyboard handling.
 
 ---
 
 ## 📸 Screenshots
-
 *(Replace these links with actual screenshots of your app)*
+
 <div align="center">
-  <img src="https://via.placeholder.com/400x250.png?text=Main+Dashboard" width="45%" alt="Dashboard" />
-  <img src="https://via.placeholder.com/400x250.png?text=Calculator+History" width="45%" alt="Calculator" />
+  <img src="assets/main.png" width="45%" alt="Main Interface" />
+  <img src="assets/calc.png" width="45%" alt="Calculator" />
+  <img src="assets/timer.png" width="45%" alt="Time Tools" />
 </div>
 
 ---
 
 ## 💻 Installation & Usage
-
-You can run DeskUtility Pro directly via Python or build it into a standalone executable.
 
 ### Method 1: Run with Python
 1. Clone the repository:
@@ -71,21 +79,21 @@ You can run DeskUtility Pro directly via Python or build it into a standalone ex
    python main.py
    ```
 
-### Method 2: Build a Standalone Executable (.exe)
-If you want to run the app without installing Python:
+### Method 2: Build Standalone Executable (.exe)
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --icon=icon.ico main.py
+pyinstaller --onefile --windowed --icon=icon.ico --name="DeskUtility Pro" main.py
 ```
-*The `.exe` file will be generated in the `dist` folder.*
 
 ---
 
 ## 🤝 Contributing
-Contributions, issues, and feature requests are welcome! 
-If you want to add a new tool to the sidebar, feel free to fork the project and submit a Pull Request.
+Contributions, issues, and feature requests are welcome!  
+Feel free to fork the project and submit a Pull Request if you want to add new tools.
 
 ---
 
-Made with ❤️ by [MRThugh](https://github.com/MRThugh)  
-⭐ **If you find this tool helpful, please leave a star on the repository!**
+**Made with ❤️ by Ali Kamrani (MRThugh)**  
+[GitHub Profile](https://github.com/MRThugh)
+
+⭐ **If you find this tool useful, please give it a star!**
