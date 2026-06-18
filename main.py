@@ -8,7 +8,6 @@ import tkinter as tk
 from tkinter import messagebox
 import math
 import time
-import threading
 import webbrowser
 import pyperclip
 import datetime
@@ -76,7 +75,7 @@ class UnitConverterFrame(ctk.CTkFrame):
                      font=("Helvetica", 12), text_color="gray").pack(pady=(0, 15))
 
         # Category selector
-        cat_frame = ctk.CTkFrame(self)
+        cat_frame = ctk.CTkFrame(self, fg_color="gray20")
         cat_frame.pack(fill="x", padx=20, pady=5)
         ctk.CTkLabel(cat_frame, text="Category:", font=("Helvetica", 13)).pack(side="left", padx=10, pady=10)
         self.category_var = ctk.StringVar(value="Length")
@@ -88,7 +87,7 @@ class UnitConverterFrame(ctk.CTkFrame):
         self.category_menu.pack(side="left", padx=10, pady=10)
 
         # Conversion area
-        conv_frame = ctk.CTkFrame(self)
+        conv_frame = ctk.CTkFrame(self, fg_color="gray20")
         conv_frame.pack(fill="x", padx=20, pady=10)
 
         # From side
@@ -115,7 +114,7 @@ class UnitConverterFrame(ctk.CTkFrame):
         self.to_menu.pack(fill="x", pady=5)
         self.result_label = ctk.CTkLabel(
             to_frame, text="Result: —", font=("Helvetica", 16, "bold"),
-            fg_color=("gray85", "gray25"), corner_radius=8, height=40
+            fg_color="gray25", corner_radius=8, height=40
         )
         self.result_label.pack(fill="x", pady=5)
 
@@ -144,10 +143,12 @@ class UnitConverterFrame(ctk.CTkFrame):
         self.result_label.configure(text="Result: —")
 
     def _swap_units(self):
-        """Swap the from and to units."""
+        """Swap the from and to units and re-convert."""
         f, t = self.from_unit.get(), self.to_unit.get()
         self.from_unit.set(t)
         self.to_unit.set(f)
+        if self.from_entry.get().strip():
+            self._convert()
 
     def _convert(self):
         """Perform the conversion and display the result."""
@@ -198,6 +199,7 @@ class CalculatorFrame(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
         self.history = deque(maxlen=50)  # Store up to 50 entries
+        self.expr_buffer = ""
         self._build_ui()
 
     def _build_ui(self):
@@ -256,8 +258,20 @@ class CalculatorFrame(ctk.CTkFrame):
                 )
                 btn.grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
 
-        # Current expression buffer
-        self.expr_buffer = ""
+        # --- History Panel ---
+        hist_panel = ctk.CTkFrame(main_frame, width=220)
+        hist_panel.pack(side="left", fill="both", padx=(5, 0))
+        hist_panel.pack_propagate(False)
+
+        ctk.CTkLabel(hist_panel, text="History", font=("Helvetica", 15, "bold")).pack(pady=(10, 5))
+        self.history_box = ctk.CTkScrollableFrame(hist_panel, fg_color="transparent")
+        self.history_box.pack(fill="both", expand=True, padx=5)
+
+        ctk.CTkButton(
+            hist_panel, text="Clear History", height=32,
+            fg_color="#8B0000", hover_color="#c0392b",
+            command=self._clear_history
+        ).pack(pady=8, padx=5, fill="x")
 
         # Keyboard binding
         self.display.bind("<Key>", self._on_key)
@@ -270,7 +284,7 @@ class CalculatorFrame(ctk.CTkFrame):
             return "#8B0000"
         elif label in ["+", "-", "*", "/", "(", ")"]:
             return "#2d5a2d"
-        return ("gray30", "gray25")
+        return "gray25"
 
     def _get_hover_color(self, label):
         if label == "=":
@@ -279,7 +293,7 @@ class CalculatorFrame(ctk.CTkFrame):
             return "#c0392b"
         elif label in ["+", "-", "*", "/", "(", ")"]:
             return "#3d7a3d"
-        return ("gray40", "gray35")
+        return "gray35"
 
     def _on_btn_press(self, label):
         """Handle calculator button press."""
@@ -302,11 +316,11 @@ class CalculatorFrame(ctk.CTkFrame):
         key = event.char
         if key in "0123456789.+-*/()":
             self._on_btn_press(key)
-        elif event.keysym == "Return":
+        elif event.keysym in ("Return", "equal") or key == "=":
             self._evaluate()
         elif event.keysym == "BackSpace":
             self._on_btn_press("←")
-        elif event.keysym == "Escape":
+        elif event.keysym in ("Escape", "c", "C"):
             self._on_btn_press("C")
 
     def _evaluate(self):
@@ -335,74 +349,6 @@ class CalculatorFrame(ctk.CTkFrame):
             self.display_var.set("Error")
             self.expr_buffer = ""
 
-    def _build_ui(self):
-        ctk.CTkLabel(self, text="Advanced Calculator", font=("Helvetica", 22, "bold")).pack(pady=(10, 5))
-        ctk.CTkLabel(self, text="Supports arithmetic, parentheses, and expressions",
-                     font=("Helvetica", 12), text_color="gray").pack(pady=(0, 10))
-
-        main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, padx=10)
-
-        # --- Calculator Panel ---
-        calc_panel = ctk.CTkFrame(main_frame)
-        calc_panel.pack(side="left", fill="both", expand=True, padx=(0, 5))
-
-        self.display_var = ctk.StringVar(value="0")
-        self.display = ctk.CTkEntry(
-            calc_panel, textvariable=self.display_var,
-            font=("Helvetica", 24, "bold"), height=60,
-            justify="right", state="readonly"
-        )
-        self.display.pack(fill="x", padx=10, pady=(10, 5))
-
-        self.expr_var = ctk.StringVar(value="")
-        ctk.CTkLabel(calc_panel, textvariable=self.expr_var,
-                     font=("Helvetica", 11), text_color="gray", anchor="e").pack(fill="x", padx=12)
-
-        btn_frame = ctk.CTkFrame(calc_panel, fg_color="transparent")
-        btn_frame.pack(padx=10, pady=10, fill="both", expand=True)
-
-        buttons = [
-            ["C", "←", "(", ")"],
-            ["7", "8", "9", "/"],
-            ["4", "5", "6", "*"],
-            ["1", "2", "3", "-"],
-            ["0", ".", "=", "+"],
-        ]
-
-        for i in range(4):
-            btn_frame.columnconfigure(i, weight=1)
-        for i in range(5):
-            btn_frame.rowconfigure(i, weight=1)
-
-        for r, row in enumerate(buttons):
-            for c, label in enumerate(row):
-                color = self._get_btn_color(label)
-                btn = ctk.CTkButton(
-                    btn_frame, text=label, width=70, height=55,
-                    font=("Helvetica", 16, "bold"), fg_color=color,
-                    hover_color=self._get_hover_color(label),
-                    command=lambda l=label: self._on_btn_press(l)
-                )
-                btn.grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
-
-        self.expr_buffer = ""
-
-        # --- History Panel ---
-        hist_panel = ctk.CTkFrame(main_frame, width=220)
-        hist_panel.pack(side="left", fill="both", padx=(5, 0))
-        hist_panel.pack_propagate(False)
-
-        ctk.CTkLabel(hist_panel, text="History", font=("Helvetica", 15, "bold")).pack(pady=(10, 5))
-        self.history_box = ctk.CTkScrollableFrame(hist_panel, fg_color="transparent")
-        self.history_box.pack(fill="both", expand=True, padx=5)
-
-        ctk.CTkButton(
-            hist_panel, text="Clear History", height=32,
-            fg_color="#8B0000", hover_color="#c0392b",
-            command=self._clear_history
-        ).pack(pady=8, padx=5, fill="x")
-
     def _update_history(self):
         """Refresh the history panel with current entries."""
         for widget in self.history_box.winfo_children():
@@ -426,7 +372,7 @@ class CalculatorFrame(ctk.CTkFrame):
 # TIMER / ALARM / STOPWATCH FRAME
 # =============================================================================
 class TimerFrame(ctk.CTkFrame):
-    """Timer, Alarm, and Stopwatch functionality in tabs."""
+    """Timer, Alarm, and Stopwatch functionality using standard main-thread loops."""
 
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
@@ -435,16 +381,15 @@ class TimerFrame(ctk.CTkFrame):
         self.sw_start_time = 0
         self.sw_elapsed = 0
         self.sw_laps = []
-        self.sw_thread = None
 
         # Timer state
         self.timer_running = False
         self.timer_remaining = 0
-        self.timer_thread = None
+        self.timer_total = 0
 
         # Alarm state
         self.alarm_active = False
-        self.alarm_thread = None
+        self.alarm_time = (0, 0)
 
         self._build_ui()
 
@@ -469,7 +414,7 @@ class TimerFrame(ctk.CTkFrame):
 
         ctk.CTkLabel(tab, text="Set Timer Duration", font=("Helvetica", 15, "bold")).pack(pady=(15, 10))
 
-        input_frame = ctk.CTkFrame(tab)
+        input_frame = ctk.CTkFrame(tab, fg_color="gray20")
         input_frame.pack(pady=10, padx=20, fill="x")
 
         ctk.CTkLabel(input_frame, text="Minutes:", font=("Helvetica", 13)).grid(row=0, column=0, padx=10, pady=10)
@@ -483,7 +428,7 @@ class TimerFrame(ctk.CTkFrame):
         # Timer display
         self.timer_display = ctk.CTkLabel(
             tab, text="00:00", font=("Helvetica", 64, "bold"),
-            fg_color=("gray85", "gray20"), corner_radius=12, width=250, height=100
+            fg_color="gray20", corner_radius=12, width=250, height=100
         )
         self.timer_display.pack(pady=20)
 
@@ -522,24 +467,25 @@ class TimerFrame(ctk.CTkFrame):
             self.timer_remaining = total
         self.timer_running = True
         self.timer_status.configure(text="Running...", text_color="#00bb00")
-        self.timer_thread = threading.Thread(target=self._run_timer, daemon=True)
-        self.timer_thread.start()
+        self._run_timer()
 
     def _run_timer(self):
-        while self.timer_running and self.timer_remaining > 0:
+        if not self.timer_running:
+            return
+        if self.timer_remaining > 0:
             self._update_timer_display()
-            time.sleep(1)
             self.timer_remaining -= 1
-        self._update_timer_display()
-        if self.timer_remaining == 0 and self.timer_running:
+            self.after(1000, self._run_timer)
+        else:
+            self._update_timer_display()
             self.timer_running = False
-            self.after(0, self._timer_done)
+            self._timer_done()
 
     def _update_timer_display(self):
         m, s = divmod(self.timer_remaining, 60)
-        self.after(0, lambda: self.timer_display.configure(text=f"{m:02d}:{s:02d}"))
+        self.timer_display.configure(text=f"{m:02d}:{s:02d}")
         progress = 1 - (self.timer_remaining / self.timer_total) if self.timer_total > 0 else 0
-        self.after(0, lambda: self.timer_progress.set(progress))
+        self.timer_progress.set(progress)
 
     def _pause_timer(self):
         self.timer_running = False
@@ -556,7 +502,7 @@ class TimerFrame(ctk.CTkFrame):
         self.timer_display.configure(text="DONE!", fg_color="#1f6aa5")
         self.timer_status.configure(text="Timer finished!", text_color="#00bb00")
         messagebox.showinfo("Timer", "⏱ Time's up!")
-        self.timer_display.configure(fg_color=("gray85", "gray20"))
+        self.timer_display.configure(fg_color="gray20")
 
     # --- ALARM TAB ---
     def _build_alarm_tab(self):
@@ -564,7 +510,7 @@ class TimerFrame(ctk.CTkFrame):
 
         ctk.CTkLabel(tab, text="Set Alarm Time (24h format)", font=("Helvetica", 15, "bold")).pack(pady=(15, 10))
 
-        input_frame = ctk.CTkFrame(tab)
+        input_frame = ctk.CTkFrame(tab, fg_color="gray20")
         input_frame.pack(pady=10, padx=20, fill="x")
 
         ctk.CTkLabel(input_frame, text="Hour (0–23):", font=("Helvetica", 13)).grid(row=0, column=0, padx=10, pady=10)
@@ -610,18 +556,18 @@ class TimerFrame(ctk.CTkFrame):
         self.alarm_active = True
         self.alarm_time = (h, m)
         self.alarm_status.configure(text=f"Alarm set for {h:02d}:{m:02d}", text_color="#00bb00")
-        self.alarm_thread = threading.Thread(target=self._run_alarm, daemon=True)
-        self.alarm_thread.start()
+        self._run_alarm()
 
     def _run_alarm(self):
-        """Check every second if alarm time is reached."""
-        while self.alarm_active:
-            now = datetime.datetime.now()
-            if now.hour == self.alarm_time[0] and now.minute == self.alarm_time[1] and now.second == 0:
-                self.alarm_active = False
-                self.after(0, self._alarm_triggered)
-                break
-            time.sleep(1)
+        """Check if alarm time is reached via native timer."""
+        if not self.alarm_active:
+            return
+        now = datetime.datetime.now()
+        if now.hour == self.alarm_time[0] and now.minute == self.alarm_time[1] and now.second == 0:
+            self.alarm_active = False
+            self._alarm_triggered()
+            return
+        self.after(1000, self._run_alarm)
 
     def _alarm_triggered(self):
         self.alarm_status.configure(text="ALARM TRIGGERED!", text_color="red")
@@ -639,7 +585,7 @@ class TimerFrame(ctk.CTkFrame):
         self.sw_display = ctk.CTkLabel(
             tab, text="00:00:00.0",
             font=("Helvetica", 52, "bold"),
-            fg_color=("gray85", "gray20"), corner_radius=12,
+            fg_color="gray20", corner_radius=12,
             width=320, height=100
         )
         self.sw_display.pack(pady=25)
@@ -656,21 +602,21 @@ class TimerFrame(ctk.CTkFrame):
                       fg_color="#8B0000", hover_color="#c0392b").pack(side="left", padx=4)
 
         ctk.CTkLabel(tab, text="Lap Times:", font=("Helvetica", 13, "bold")).pack(pady=(15, 5))
-        self.lap_box = ctk.CTkScrollableFrame(tab, height=160)
+        self.lap_box = ctk.CTkScrollableFrame(tab, height=160, fg_color="gray20")
         self.lap_box.pack(fill="x", padx=20)
 
     def _sw_start(self):
         if not self.sw_running:
             self.sw_running = True
             self.sw_start_time = time.time() - self.sw_elapsed
-            self.sw_thread = threading.Thread(target=self._run_stopwatch, daemon=True)
-            self.sw_thread.start()
+            self._run_stopwatch()
 
     def _run_stopwatch(self):
-        while self.sw_running:
-            self.sw_elapsed = time.time() - self.sw_start_time
-            self.after(0, self._update_sw_display)
-            time.sleep(0.1)
+        if not self.sw_running:
+            return
+        self.sw_elapsed = time.time() - self.sw_start_time
+        self._update_sw_display()
+        self.after(50, self._run_stopwatch)
 
     def _update_sw_display(self):
         e = self.sw_elapsed
@@ -707,7 +653,7 @@ class TimerFrame(ctk.CTkFrame):
 # CLIPBOARD MANAGER FRAME
 # =============================================================================
 class ClipboardFrame(ctk.CTkFrame):
-    """Monitors and manages clipboard history."""
+    """Monitors and manages clipboard history on the main thread safely."""
 
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
@@ -715,7 +661,7 @@ class ClipboardFrame(ctk.CTkFrame):
         self.last_clip = ""
         self.monitoring = True
         self._build_ui()
-        self._start_monitoring()
+        self._poll_clipboard()
 
     def _build_ui(self):
         ctk.CTkLabel(self, text="Clipboard Manager", font=("Helvetica", 22, "bold")).pack(pady=(10, 5))
@@ -724,7 +670,7 @@ class ClipboardFrame(ctk.CTkFrame):
 
         # History list
         ctk.CTkLabel(self, text="Clipboard History:", font=("Helvetica", 14, "bold")).pack(anchor="w", padx=20)
-        self.list_frame = ctk.CTkScrollableFrame(self, height=320)
+        self.list_frame = ctk.CTkScrollableFrame(self, height=320, fg_color="gray20")
         self.list_frame.pack(fill="both", expand=True, padx=20, pady=5)
 
         # Action buttons
@@ -742,26 +688,22 @@ class ClipboardFrame(ctk.CTkFrame):
         # Track selected item
         self.selected_text = None
 
-    def _start_monitoring(self):
-        """Start background thread to monitor clipboard."""
-        self.monitor_thread = threading.Thread(target=self._monitor_clipboard, daemon=True)
-        self.monitor_thread.start()
-
-    def _monitor_clipboard(self):
-        """Continuously check clipboard for new content."""
-        while self.monitoring:
-            try:
-                current = pyperclip.paste()
-                if current and current != self.last_clip:
-                    self.last_clip = current
-                    if current not in self.clipboard_history:
-                        self.clipboard_history.insert(0, current)
-                        if len(self.clipboard_history) > 30:
-                            self.clipboard_history.pop()
-                        self.after(0, self._refresh_list)
-            except Exception:
-                pass
-            time.sleep(0.8)
+    def _poll_clipboard(self):
+        """Continuously check clipboard for new content on the main thread safely."""
+        if not self.monitoring:
+            return
+        try:
+            current = pyperclip.paste()
+            if current and current != self.last_clip:
+                self.last_clip = current
+                if current not in self.clipboard_history:
+                    self.clipboard_history.insert(0, current)
+                    if len(self.clipboard_history) > 30:
+                        self.clipboard_history.pop()
+                    self._refresh_list()
+        except Exception:
+            pass
+        self.after(800, self._poll_clipboard)
 
     def _refresh_list(self):
         """Rebuild the visual list of clipboard entries."""
@@ -769,7 +711,7 @@ class ClipboardFrame(ctk.CTkFrame):
             widget.destroy()
 
         for i, text in enumerate(self.clipboard_history):
-            entry_frame = ctk.CTkFrame(self.list_frame, corner_radius=6)
+            entry_frame = ctk.CTkFrame(self.list_frame, corner_radius=6, fg_color="gray25")
             entry_frame.pack(fill="x", pady=3, padx=2)
 
             preview = text[:80] + "..." if len(text) > 80 else text
@@ -790,8 +732,9 @@ class ClipboardFrame(ctk.CTkFrame):
         """Highlight selected clipboard item."""
         # Reset all frames
         for widget in self.list_frame.winfo_children():
-            widget.configure(fg_color=("gray80", "gray20"))
-        frame.configure(fg_color=("lightblue", "#1a3a5c"))
+            if isinstance(widget, ctk.CTkFrame):
+                widget.configure(fg_color="gray25")
+        frame.configure(fg_color="#1a3a5c")
         self.selected_text = text
 
     def _copy_selected(self):
@@ -833,7 +776,7 @@ class WindowToolsFrame(ctk.CTkFrame):
         cards_frame.pack(fill="both", expand=True, padx=30)
 
         # --- Minimize All Card ---
-        min_card = ctk.CTkFrame(cards_frame, corner_radius=12)
+        min_card = ctk.CTkFrame(cards_frame, corner_radius=12, fg_color="gray20")
         min_card.pack(fill="x", pady=10)
         ctk.CTkLabel(min_card, text="🗕 Minimize Window", font=("Helvetica", 16, "bold")).pack(pady=(15, 5), padx=20, anchor="w")
         ctk.CTkLabel(
@@ -847,7 +790,7 @@ class WindowToolsFrame(ctk.CTkFrame):
         ).pack(pady=(5, 15), padx=20, anchor="w")
 
         # --- Always On Top Card ---
-        aot_card = ctk.CTkFrame(cards_frame, corner_radius=12)
+        aot_card = ctk.CTkFrame(cards_frame, corner_radius=12, fg_color="gray20")
         aot_card.pack(fill="x", pady=10)
         ctk.CTkLabel(aot_card, text="📌 Always On Top", font=("Helvetica", 16, "bold")).pack(pady=(15, 5), padx=20, anchor="w")
         ctk.CTkLabel(
@@ -871,7 +814,7 @@ class WindowToolsFrame(ctk.CTkFrame):
         self.aot_label.pack(side="left")
 
         # --- Window Opacity Card ---
-        opacity_card = ctk.CTkFrame(cards_frame, corner_radius=12)
+        opacity_card = ctk.CTkFrame(cards_frame, corner_radius=12, fg_color="gray20")
         opacity_card.pack(fill="x", pady=10)
         ctk.CTkLabel(opacity_card, text="🔆 Window Opacity", font=("Helvetica", 16, "bold")).pack(pady=(15, 5), padx=20, anchor="w")
         ctk.CTkLabel(
@@ -954,14 +897,14 @@ class DeskUtilityPro(ctk.CTk):
 
     def _build_header(self):
         """Build the top header bar with logo placeholder and title."""
-        header = ctk.CTkFrame(self, height=60, corner_radius=0, fg_color=("gray15", "gray10"))
+        header = ctk.CTkFrame(self, height=60, corner_radius=0, fg_color="gray10")
         header.grid(row=0, column=0, columnspan=2, sticky="ew")
         header.grid_propagate(False)
         header.grid_columnconfigure(1, weight=1)
 
         # Logo placeholder area
         logo_frame = ctk.CTkFrame(header, width=50, height=50, corner_radius=8,
-                                  fg_color=("gray25", "gray20"))
+                                  fg_color="gray20")
         logo_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
         logo_frame.grid_propagate(False)
 
@@ -997,7 +940,7 @@ class DeskUtilityPro(ctk.CTk):
     def _build_sidebar(self):
         """Build the left navigation sidebar with tool buttons."""
         sidebar = ctk.CTkFrame(self, width=190, corner_radius=0,
-                               fg_color=("gray18", "gray13"))
+                               fg_color="gray13")
         sidebar.grid(row=1, column=0, sticky="nsew")
         sidebar.grid_propagate(False)
 
@@ -1017,8 +960,8 @@ class DeskUtilityPro(ctk.CTk):
                 height=44,
                 font=("Helvetica", 13),
                 fg_color="transparent",
-                hover_color=("gray30", "gray25"),
-                text_color=("gray80", "gray80"),
+                hover_color="gray25",
+                text_color="gray80",
                 corner_radius=8,
                 command=lambda n=name: self._switch_frame(n)
             )
@@ -1033,7 +976,7 @@ class DeskUtilityPro(ctk.CTk):
     def _build_content_area(self):
         """Build the right-side content frame container."""
         self.content_area = ctk.CTkFrame(self, corner_radius=0,
-                                          fg_color=("gray92", "gray17"))
+                                          fg_color="gray17")
         self.content_area.grid(row=1, column=1, sticky="nsew", padx=0, pady=0)
         self.content_area.grid_columnconfigure(0, weight=1)
         self.content_area.grid_rowconfigure(0, weight=1)
@@ -1066,13 +1009,14 @@ class DeskUtilityPro(ctk.CTk):
         # Show requested frame
         frame = self._get_frame(name)
         frame.grid()
+        frame.focus_set()
 
         # Update sidebar button highlighting
         for btn_name, btn in self.sidebar_buttons.items():
             if btn_name == name:
-                btn.configure(fg_color=("gray35", "gray28"), text_color="white")
+                btn.configure(fg_color="gray28", text_color="white")
             else:
-                btn.configure(fg_color="transparent", text_color=("gray80", "gray80"))
+                btn.configure(fg_color="transparent", text_color="gray80")
 
         self.active_tool = name
 
@@ -1096,40 +1040,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# =============================================================================
-# DEVELOPER NOTES
-# =============================================================================
-#
-# 1. HOW TO REPLACE THE LOGO:
-#    - Locate the comment "# Place your logo file path here" inside the
-#      _build_header() method of DeskUtilityPro class.
-#    - Install Pillow: pip install Pillow
-#    - Uncomment the two lines:
-#        from PIL import Image  (add at top of file)
-#        logo_img = ctk.CTkImage(Image.open("path/to/logo.png"), size=(44, 44))
-#        ctk.CTkLabel(logo_frame, image=logo_img, text="").place(...)
-#    - Replace "path/to/logo.png" with your actual logo file path.
-#    - Recommended size: 44x44 pixels, PNG with transparent background.
-#
-# 2. HOW TO REPLACE THE WINDOW ICON (.ico):
-#    - Locate the comment "# Place your .ico file path here" inside the
-#      _configure_window() method of DeskUtilityPro class.
-#    - Uncomment the line:
-#        self.iconbitmap("path/to/your/icon.ico")
-#    - Replace "path/to/your/icon.ico" with your actual .ico file path.
-#    - Note: .ico format is required for Windows; on Linux/macOS use .png
-#      with self.iconphoto(True, tk.PhotoImage(file="icon.png"))
-#
-# 3. HOW TO RUN THE SCRIPT:
-#    Step 1: Make sure Python 3.9+ is installed on your system.
-#    Step 2: Install required packages:
-#              pip install customtkinter pyperclip
-#    Step 3: Run the script:
-#              python desk_utility_pro.py
-#    Optional: To build a standalone executable:
-#              pip install pyinstaller
-#              pyinstaller --onefile --windowed desk_utility_pro.py
-#
-# =============================================================================
